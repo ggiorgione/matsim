@@ -21,8 +21,8 @@
 package org.matsim.analysis;
 
 import org.apache.log4j.Logger;
-import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControlerConfigGroup.LegHistogramFormat;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
@@ -53,7 +53,19 @@ final class LegHistogramListener implements IterationEndsListener, IterationStar
 
 	@Override
 	public void notifyIterationEnds(final IterationEndsEvent event) {
-		this.histogram.write(controlerIO.getIterationFilename(event.getIteration(), "legHistogram.txt"));
+		for (LegHistogramFormat format: controlerConfigGroup.getLegHistogramFormats()) {
+			switch (format) {
+				case txt:
+					this.histogram.write(controlerIO.getIterationFilename(event.getIteration(), "legHistogram.txt"));
+					break;
+				case influx:
+					this.histogram.persist();
+					break;
+				default:
+					log.error("unknown leg histogram format " + format);
+			}
+		}
+
 		this.printStats();
 		if (controlerConfigGroup.isCreateGraphs()) {
 			LegHistogramChart.writeGraphic(this.histogram, controlerIO.getIterationFilename(event.getIteration(), "legHistogram_all.png"));

@@ -20,6 +20,7 @@
 
 package org.matsim.analysis;
 
+import org.influxdb.dto.Point;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.PersonStuckEvent;
@@ -28,16 +29,17 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonStuckEventHandler;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.influx.InfluxManager;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.Time;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author mrieser
@@ -56,11 +58,13 @@ public class LegHistogram implements PersonDepartureEventHandler, PersonArrivalE
 	private final int binSize;
 	private final int nofBins;
 	private final Map<String, DataFrame> data = new TreeMap<>();
+	private InfluxManager influxManager;
 
 	@Inject
-	LegHistogram(Population population, EventsManager eventsManager) {
+	LegHistogram(Population population, EventsManager eventsManager, InfluxManager influxManager) {
 		this(300);
 		this.population = population;
+		this.influxManager = influxManager;
 		eventsManager.addHandler(this);
 	}
 
@@ -163,6 +167,38 @@ public class LegHistogram implements PersonDepartureEventHandler, PersonArrivalE
 			// new line
 			stream.print("\n");
 		}
+	}
+
+	public void persist() {
+		int allEnRoute = 0;
+		int[] modeEnRoute = new int[this.data.size()];
+		DataFrame allModesData = getAllModesData();
+		for (int i = 0; i < allModesData.countsDep.length; i++) {
+			long time = (long) (i * binSize);
+			allEnRoute = allEnRoute + allModesData.countsDep[i] - allModesData.countsArr[i] - allModesData.countsStuck[i];
+			addPoint("departures_all", time, allModesData.countsDep[i]);
+			addPoint("arrivals_all", time, allModesData.countsArr[i]);
+			addPoint("stuck_all", time, allModesData.countsStuck[i]);
+			addPoint("en-route_all", time, allEnRoute);
+			int mode = 0;
+			for (Entry<String, DataFrame> e : this.data.entrySet()) {
+				String legMode = e.getKey();
+				DataFrame dataFrame = e.getValue();
+				modeEnRoute[mode] = modeEnRoute[mode] + dataFrame.countsDep[i] - dataFrame.countsArr[i] - dataFrame.countsStuck[i];
+				addPoint("departures_" + legMode, time, dataFrame.countsDep[i]);
+				addPoint("arrivals_" + legMode, time, dataFrame.countsArr[i]);
+				addPoint("stuck_" + legMode, time, dataFrame.countsStuck[i]);
+				addPoint("en-route_" + legMode, time, modeEnRoute[mode]);
+				mode++;
+			}
+		}
+	}
+
+	private void addPoint(String seriesName, long time, int value) {
+		Point.Builder p = Point.measurement("leg_histogram_" + seriesName + "_" + iteration);
+		p.time(time, TimeUnit.SECONDS);
+		p.addField("value", value);
+		influxManager.write(p.build());
 	}
 
     /**

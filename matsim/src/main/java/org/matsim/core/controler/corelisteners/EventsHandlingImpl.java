@@ -37,6 +37,7 @@ import org.matsim.core.controler.listener.BeforeMobsimListener;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 import org.matsim.core.events.algorithms.EventWriter;
+import org.matsim.core.influx.EventWriterInflux;
 import org.matsim.core.events.algorithms.EventWriterXML;
 
 import com.google.inject.Inject;
@@ -87,6 +88,9 @@ final class EventsHandlingImpl implements EventsHandling, BeforeMobsimListener,
 				case xml:
 					this.eventWriters.add(new EventWriterXML(controlerIO.getIterationFilename(event.getIteration(), 
 							Controler.FILENAME_EVENTS_XML)));
+					break;
+				case influx:
+					// nothing to do here, EventWriterInflux itself listens to the event
 					break;
 				default:
 					log.warn("Unknown events file format specified: " + format.toString() + ".");

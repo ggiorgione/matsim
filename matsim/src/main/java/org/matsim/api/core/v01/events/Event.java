@@ -20,8 +20,13 @@
 
 package org.matsim.api.core.v01.events;
 
+import org.influxdb.dto.Point;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import static java.util.Optional.ofNullable;
 
 public abstract class Event {
 
@@ -76,6 +81,18 @@ public abstract class Event {
 	@Override
 	public int hashCode() {
 		return getAttributes().hashCode(); // Two equal events must at least have the same attributes, so they will get the same hashCode like this.
+	}
+
+	public String getEventName() {
+		return ofNullable(getEventType()).orElse(ofNullable(getClass().getCanonicalName()).orElse("unknown_event"));
+	}
+
+	public Point.Builder toPoint(int iteration) {
+		Point.Builder p = Point.measurement(getEventName() + "_" + iteration);
+		for (Entry<String, String> e: getAttributes().entrySet()) {
+			p.addField(e.getKey(), e.getValue());
+		}
+		return p;
 	}
 
 }

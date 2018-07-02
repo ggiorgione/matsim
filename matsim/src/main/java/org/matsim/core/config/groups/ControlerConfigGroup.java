@@ -39,7 +39,9 @@ public final class ControlerConfigGroup extends ReflectiveConfigGroup {
 
 	public enum RoutingAlgorithmType {Dijkstra, AStarLandmarks, FastDijkstra, FastAStarLandmarks}
 
-	public enum EventsFileFormat {xml}
+	public enum EventsFileFormat {xml, influx}
+
+	public enum LegHistogramFormat {txt, influx}
 
 	public static final String GROUP_NAME = "controler";
 
@@ -50,6 +52,7 @@ public final class ControlerConfigGroup extends ReflectiveConfigGroup {
 	private static final String RUNID = "runId";
 	private static final String LINKTOLINK_ROUTING_ENABLED = "enableLinkToLinkRouting";
 	/*package*/ static final String EVENTS_FILE_FORMAT = "eventsFileFormat";
+	private static final String LEG_HISTOGRAM_FORMAT = "legHistogramFormat";
 	private static final String SNAPSHOT_FORMAT = "snapshotFormat";
 	private static final String WRITE_EVENTS_INTERVAL = "writeEventsInterval";
 	private static final String WRITE_PLANS_INTERVAL = "writePlansInterval";
@@ -73,6 +76,7 @@ public final class ControlerConfigGroup extends ReflectiveConfigGroup {
 	private String runId = null;
 
 	private Set<EventsFileFormat> eventsFileFormats = Collections.unmodifiableSet(EnumSet.of(EventsFileFormat.xml));
+	private Set<LegHistogramFormat> legHistogramFormats = Collections.unmodifiableSet(EnumSet.of(LegHistogramFormat.txt));
 
 	private int writeEventsInterval=10;
 	private int writePlansInterval=10;
@@ -219,6 +223,37 @@ public final class ControlerConfigGroup extends ReflectiveConfigGroup {
 			}
 		}
 		this.eventsFileFormats = formats;
+	}
+
+	@StringGetter(LEG_HISTOGRAM_FORMAT)
+	private String getLegHistoramFormatAsString() {
+		boolean isFirst = true;
+		StringBuilder str = new StringBuilder();
+		for (LegHistogramFormat format : this.legHistogramFormats) {
+			if (!isFirst) {
+				str.append(',');
+			}
+			str.append(format.toString());
+			isFirst = false;
+		}
+		return str.toString();
+	}
+
+	@StringSetter(LEG_HISTOGRAM_FORMAT)
+	private void setLegHistoramFormats( final String value ) {
+		String[] parts = StringUtils.explode(value, ',');
+		Set<LegHistogramFormat> formats = EnumSet.noneOf(LegHistogramFormat.class);
+		for (String part : parts) {
+			String trimmed = part.trim();
+			if (trimmed.length() > 0) {
+				formats.add(LegHistogramFormat.valueOf(trimmed));
+			}
+		}
+		this.legHistogramFormats = formats;
+	}
+
+	public Set<LegHistogramFormat> getLegHistogramFormats() {
+		return legHistogramFormats;
 	}
 
 	public Set<EventsFileFormat> getEventsFileFormats() {
