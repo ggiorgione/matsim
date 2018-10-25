@@ -29,11 +29,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.apache.log4j.Logger;
+import org.influxdb.dto.Point;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
@@ -48,6 +50,7 @@ import org.matsim.core.controler.events.StartupEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 import org.matsim.core.controler.listener.StartupListener;
+import org.matsim.core.influx.InfluxManager;
 import org.matsim.core.population.PersonUtils;
 import org.matsim.core.router.EmptyStageActivityTypes;
 import org.matsim.core.router.MainModeIdentifier;
@@ -58,6 +61,8 @@ import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.utils.charts.XYLineChart;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
+
+import static org.matsim.core.config.groups.ControlerConfigGroup.EventsFileFormat.influx;
 
 /**
  * Calculates at the end of each iteration the following statistics:
@@ -82,9 +87,12 @@ public class ScoreStatsControlerListener implements StartupListener, IterationEn
 	final private Population population;
 	final private BufferedWriter out;
 	final private String fileName;
-	
+
+
+	private Point.Builder point;
 	private final boolean createPNG;
 	private final ControlerConfigGroup controlerConfigGroup;
+	private InfluxManager influxManager;
 
 	Map<ScoreItem,Map< Integer, Double>> scoreHistory = new HashMap<>() ;
 	private int minIteration = 0;
@@ -93,7 +101,7 @@ public class ScoreStatsControlerListener implements StartupListener, IterationEn
 
 	@Inject
 	ScoreStatsControlerListener(ControlerConfigGroup controlerConfigGroup, Population population1, OutputDirectoryHierarchy controlerIO,
-			PlanCalcScoreConfigGroup scoreConfig, Provider<TripRouter> tripRouterFactory ) {
+								PlanCalcScoreConfigGroup scoreConfig, Provider<TripRouter> tripRouterFactory, InfluxManager influxManager) {
 		this.controlerConfigGroup = controlerConfigGroup;
 		this.population = population1;
 		this.fileName = controlerIO.getOutputFilename(FILENAME_SCORESTATS);
@@ -104,6 +112,12 @@ public class ScoreStatsControlerListener implements StartupListener, IterationEn
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
+
+		if(controlerConfigGroup.getEventsFileFormats().contains(influx)) {
+			this.influxManager = influxManager;
+			point = Point.measurement(FILENAME_SCORESTATS);
+		}
+
 	}
 
 	@Override
@@ -201,6 +215,15 @@ public class ScoreStatsControlerListener implements StartupListener, IterationEn
 			e.printStackTrace();
 		}
 
+		if(controlerConfigGroup.getEventsFileFormats().contains(influx)){
+			point.time((long)event.getIteration(), TimeUnit.MINUTES);
+			point.addField(ScoreItem.worst.toString(), sumScoreWorst / nofScoreWorst);
+			point.addField(ScoreItem.best.toString(), sumScoreBest / nofScoreBest);
+			point.addField(ScoreItem.average.toString(), sumAvgScores / nofAvgScores);
+			point.addField(ScoreItem.executed.toString(), sumExecutedScores / nofExecutedScores);
+			influxManager.write(point.build());
+
+		}
 //		int index = event.getIteration() - this.minIteration;
 
 		this.scoreHistory.get( ScoreItem.worst ).put( event.getIteration(), sumScoreWorst / nofScoreWorst ) ;
