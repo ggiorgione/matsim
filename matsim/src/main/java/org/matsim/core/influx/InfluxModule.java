@@ -17,14 +17,17 @@ public class InfluxModule extends AbstractModule {
     private ControlerConfigGroup controlerConfigGroup;
 
     private String url;
+    private boolean enableConnection;
 
-    public InfluxModule(String url) {
+
+    public InfluxModule(String url, boolean enableConnection) {
         this.url = url;
+        this.enableConnection = enableConnection;
     }
 
     @Provides @Singleton
     private InfluxManager influxManager() {
-        return new InfluxManager(url);
+        return new InfluxManager(url, enableConnection);
     }
 
     @Override

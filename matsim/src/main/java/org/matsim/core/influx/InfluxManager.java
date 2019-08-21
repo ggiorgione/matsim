@@ -15,21 +15,24 @@ public class InfluxManager implements Closeable {
 
     private InfluxDB db;
 
-    public InfluxManager(String url) {
-        dbName = "matsim_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yy_MM_dd_hh_mm"));
-        db = InfluxDBFactory.connect(url);
-        db.query(new Query("CREATE DATABASE " + dbName, dbName));
-        db.setDatabase(dbName);
-        db.enableBatch();
+    public InfluxManager(String url, boolean enableConnection) {
+        if(enableConnection){
+            dbName = "matsim_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yy_MM_dd_hh_mm"));
+            db = InfluxDBFactory.connect(url);
+            db.query(new Query("CREATE DATABASE " + dbName, dbName));
+            db.setDatabase(dbName);
+            db.enableBatch();
+        }
+
     }
 
     @Override
     public void close() {
-        db.close();
+        if(db!= null) db.close();
     }
 
     public void write(Point p) {
-        db.write(p);
+        if(db!=null) db.write(p);
     }
 
 }
