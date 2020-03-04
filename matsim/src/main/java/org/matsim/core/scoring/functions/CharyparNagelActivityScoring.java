@@ -120,6 +120,7 @@ public final class CharyparNagelActivityScoring implements org.matsim.core.scori
 			 * assume A <= D
 			 */
 
+			double vot = this.params.vot;
 			double[] openingInterval = openingIntervalCalculator.getOpeningInterval(act);
 			double openingTime = openingInterval[0];
 			double closingTime = openingInterval[1];
@@ -144,14 +145,14 @@ public final class CharyparNagelActivityScoring implements org.matsim.core.scori
 			// disutility if too early
 			if (arrivalTime < activityStart) {
 				// agent arrives to early, has to wait
-				tmpScore += this.params.marginalUtilityOfWaiting_s * (activityStart - arrivalTime);
+				tmpScore += vot * this.params.marginalUtilityOfWaiting_s * (activityStart - arrivalTime);
 			}
 
 			// disutility if too late
 
 			double latestStartTime = actParams.getLatestStartTime();
 			if ((latestStartTime >= 0) && (activityStart > latestStartTime)) {
-				tmpScore += this.params.marginalUtilityOfLateArrival_s * (activityStart - latestStartTime);
+				tmpScore += vot * this.params.marginalUtilityOfLateArrival_s * (activityStart - latestStartTime);
 			}
 
 			// utility of performing an action, duration is >= 1, thus log is no problem
@@ -159,16 +160,16 @@ public final class CharyparNagelActivityScoring implements org.matsim.core.scori
 
 			if ( this.params.usingOldScoringBelowZeroUtilityDuration ) {
 				if (duration > 0) {
-					double utilPerf = this.params.marginalUtilityOfPerforming_s * typicalDuration
+					double utilPerf = vot * this.params.marginalUtilityOfPerforming_s * typicalDuration
 							* Math.log((duration / 3600.0) / actParams.getZeroUtilityDuration_h());
-					double utilWait = this.params.marginalUtilityOfWaiting_s * duration;
+					double utilWait = vot * this.params.marginalUtilityOfWaiting_s * duration;
 					tmpScore += Math.max(0, Math.max(utilPerf, utilWait));
 				} else {
-					tmpScore += 2*this.params.marginalUtilityOfLateArrival_s*Math.abs(duration);
+					tmpScore += vot * 2*this.params.marginalUtilityOfLateArrival_s*Math.abs(duration);
 				}
 			} else {
 				if ( duration >= 3600.*actParams.getZeroUtilityDuration_h() ) {
-					double utilPerf = this.params.marginalUtilityOfPerforming_s * typicalDuration
+					double utilPerf = vot * this.params.marginalUtilityOfPerforming_s * typicalDuration
 							* Math.log((duration / 3600.0) / actParams.getZeroUtilityDuration_h());
 					// also removing the "wait" alternative scoring.
 					tmpScore += utilPerf ;
@@ -182,7 +183,7 @@ public final class CharyparNagelActivityScoring implements org.matsim.core.scori
 //					}
 					
 					// below zeroUtilityDuration, we linearly extend the slope ...:
-					double slopeAtZeroUtility = this.params.marginalUtilityOfPerforming_s * typicalDuration / ( 3600.*actParams.getZeroUtilityDuration_h() ) ;
+					double slopeAtZeroUtility = vot * this.params.marginalUtilityOfPerforming_s * typicalDuration / ( 3600.*actParams.getZeroUtilityDuration_h() ) ;
 					if ( slopeAtZeroUtility < 0. ) {
 						// (beta_perf might be = 0)
 						System.err.println("beta_perf: " + this.params.marginalUtilityOfPerforming_s);
@@ -202,18 +203,18 @@ public final class CharyparNagelActivityScoring implements org.matsim.core.scori
 			// disutility if stopping too early
 			double earliestEndTime = actParams.getEarliestEndTime();
 			if ((earliestEndTime >= 0) && (activityEnd < earliestEndTime)) {
-				tmpScore += this.params.marginalUtilityOfEarlyDeparture_s * (earliestEndTime - activityEnd);
+				tmpScore += vot * this.params.marginalUtilityOfEarlyDeparture_s * (earliestEndTime - activityEnd);
 			}
 
 			// disutility if going to away to late
 			if (activityEnd < departureTime) {
-				tmpScore += this.params.marginalUtilityOfWaiting_s * (departureTime - activityEnd);
+				tmpScore += vot * this.params.marginalUtilityOfWaiting_s * (departureTime - activityEnd);
 			}
 
 			// disutility if duration was too short
 			double minimalDuration = actParams.getMinimalDuration();
 			if ((minimalDuration >= 0) && (duration < minimalDuration)) {
-				tmpScore += this.params.marginalUtilityOfEarlyDeparture_s * (minimalDuration - duration);
+				tmpScore += vot * this.params.marginalUtilityOfEarlyDeparture_s * (minimalDuration - duration);
 			}
 		}
 		return tmpScore;

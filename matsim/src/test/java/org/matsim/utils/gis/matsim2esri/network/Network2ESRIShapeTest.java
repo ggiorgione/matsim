@@ -38,7 +38,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 public class Network2ESRIShapeTest extends MatsimTestCase  {
 
 	public void testPolygonCapacityShape() {
-		String netFileName = "test/scenarios/equil/network.xml";
+		String netFileName = "test/studyNetworkLight.xml";
 		String outputFileP = getOutputDirectory() + "./network.shp";
 
 		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());

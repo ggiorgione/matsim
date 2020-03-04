@@ -84,7 +84,7 @@ public class Links2ESRIShape {
 		String defaultCRS = "DHDN_GK4";
 		boolean commonWealth = false; //to render Commonwealth networks correctly (e.g. drive on left-hand side of the road)
 		if ( args.length == 0 ) {
-			netfile = "./examples/equil/network.xml";
+			netfile = "./examples/scenarios/equil/studyNetworkLight.xml";
 //		String netfile = "./test/scenarios/berlin/network.xml.gz";
 
 			outputFileLs = "./plans/networkLs.shp";

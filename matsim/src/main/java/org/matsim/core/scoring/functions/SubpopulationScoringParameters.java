@@ -61,6 +61,7 @@ public class SubpopulationScoringParameters implements ScoringParametersForPerso
 		final String subpopulation = (String) personAttributes.getAttribute(
 				person.getId().toString(),
 				subpopulationAttributeName);
+		final Double vot = (Double) person.getAttributes().getAttribute("vot");
 
 		if (!this.params.containsKey(subpopulation)) {
 			/* lazy initialization of params. not strictly thread safe, as different threads could
@@ -80,6 +81,7 @@ public class SubpopulationScoringParameters implements ScoringParametersForPerso
 				transitActivityParams.setClosingTime(0.) ;
 				ActivityUtilityParameters.Builder modeParamsBuilder = new ActivityUtilityParameters.Builder(transitActivityParams);
 				modeParamsBuilder.setScoreAtAll(false);
+				builder.setVot(vot);
 				builder.setActivityParameters(PtConstants.TRANSIT_ACTIVITY_TYPE, modeParamsBuilder);
 			}
 

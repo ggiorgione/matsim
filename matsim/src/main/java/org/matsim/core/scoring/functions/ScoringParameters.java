@@ -45,6 +45,8 @@ public class ScoringParameters implements MatsimParameters {
 	public final double marginalUtilityOfMoney;
 	public final double abortedPlanScore;
 	public final boolean scoreActs;
+	public final double vot;
+
 	
 	public final boolean usingOldScoringBelowZeroUtilityDuration ;
 	
@@ -63,7 +65,8 @@ public class ScoringParameters implements MatsimParameters {
 			final double abortedPlanScore,
 			final boolean scoreActs,
 			final boolean usingOldScoringBelowZeroUtilityDuration,
-			final double simulationPeriodInDays) {
+			final double simulationPeriodInDays,
+			final double vot) {
 		this.utilParams = utilParams;
 		this.modeParams = modeParams;
 		this.marginalUtilityOfWaiting_s = marginalUtilityOfWaiting_s;
@@ -77,6 +80,7 @@ public class ScoringParameters implements MatsimParameters {
 		this.scoreActs = scoreActs;
 		this.usingOldScoringBelowZeroUtilityDuration = usingOldScoringBelowZeroUtilityDuration;
 		this.simulationPeriodInDays = simulationPeriodInDays;
+		this.vot = vot;
 	}
 
 	public static final class Builder {
@@ -94,6 +98,7 @@ public class ScoringParameters implements MatsimParameters {
 		private boolean scoreActs;
 		private boolean usingOldScoringBelowZeroUtilityDuration;
 		private double simulationPeriodInDays = 1.0;
+		private double vot;
 
 		public Builder(
 				final Scenario scenario,
@@ -125,6 +130,7 @@ public class ScoringParameters implements MatsimParameters {
 			marginalUtilityOfMoney = scoringParameterSet.getMarginalUtilityOfMoney() ;
 			scoreActs = marginalUtilityOfPerforming_s != 0 || marginalUtilityOfWaiting_s != 0 ||
 					marginalUtilityOfLateArrival_s != 0 || marginalUtilityOfEarlyDeparture_s != 0;
+
 
 			utilParams = new TreeMap<>() ;
 			for (ActivityParams params : scoringParameterSet.getActivityParams()) {
@@ -220,6 +226,12 @@ public class ScoringParameters implements MatsimParameters {
 			return this;
 		}
 
+
+		public Builder setVot(double vot) {
+			this.vot = vot;
+			return this;
+		}
+
 		public ScoringParameters build() {
 			final Map<String, ModeUtilityParameters> modes = new TreeMap<>();
 			for ( Map.Entry<String, ModeUtilityParameters.Builder> e : modeParams.entrySet() ) {
@@ -244,7 +256,8 @@ public class ScoringParameters implements MatsimParameters {
 					abortedPlanScore,
 					scoreActs,
 					usingOldScoringBelowZeroUtilityDuration,
-					this.simulationPeriodInDays);
+					this.simulationPeriodInDays,
+					vot);
 		}
 	}
 }

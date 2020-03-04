@@ -71,6 +71,7 @@ public final class PlanCalcScoreConfigGroup extends ConfigGroup {
 
 	private final ReflectiveDelegate delegate = new ReflectiveDelegate();
 
+
 	public PlanCalcScoreConfigGroup() {
 		super(GROUP_NAME);
 
